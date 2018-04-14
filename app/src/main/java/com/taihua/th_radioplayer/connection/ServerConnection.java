@@ -98,7 +98,7 @@ public class ServerConnection {
 		if(sendStr == null)
 		    return null;
 
-        LogUtil.d(TAG, "setClientInit URL:" + setClientInitUrl());
+        LogUtil.d(TAG, "setClientInit url:" + setClientInitUrl());
 		LogUtil.d(TAG, "setClientInit sendStr:" + sendStr);
 		String jsonStr = ConnectUtil.jsonPost(setClientInitUrl(), sendStr);
         LogUtil.d(TAG, "setClientInit jsonStr:" + jsonStr);
