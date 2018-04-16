@@ -50,7 +50,7 @@ public class BaseDataUpdater {
 		if(mBaseData != null) {
 			sendMessage(UPDATE_BASE_DATA, mBaseData.getData().getBase());
 			sendMessage(UPDATE_RADIO_PACKET_LIST, mBaseData.getData().getMusic());
-            mCheckCycle = mBaseData.getData().getBase().getBox_check_cycle();
+            setCycle(mBaseData.getData().getBase().getBox_check_cycle());
 		}
 	}
 	
@@ -183,6 +183,9 @@ public class BaseDataUpdater {
 	    boolean isUpdate = false;
 
         ArrayList<BaseDataDataIteamIB> radios = baseData.getData().getMusic();
+        if(radios == null)
+            return false;
+
 	    for(BaseDataDataIteamIB radio : radios) {
             List<BaseDataDataChannelIB> channels = radio.getChannel();
 
@@ -247,7 +250,8 @@ public class BaseDataUpdater {
 		    return;
 
 	    mCheckCycle = cycle;
-	    reset(mCheckCycle * 60000);
+	    if(isRunning)
+	        reset(mCheckCycle * 60000);
 	    LogUtil.d(TAG, "setCycle:" + mCheckCycle);
 	}
 	

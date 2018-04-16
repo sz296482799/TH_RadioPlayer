@@ -62,16 +62,37 @@ public class MainService extends Service {
         super.onCreate();
     }
 
+    private void setSystemTime() {
+        ReturnTimeOB returnTimeOB = ServerConnection.getInstance().getServerTime();
+        if(returnTimeOB != null && returnTimeOB.getResponse_code() == 1) {
+            //SystemClock.setCurrentTimeMillis(returnTimeOB.getTime());
+        }
+    }
+
     private Thread mClientThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            InitclientIB initclientIB = new InitclientIB(mDeviceID, Config.CLINE_TYPE);
-            ReturnOB returnOB = ServerConnection.getInstance().setClientInit(initclientIB);
+
+            setSystemTime();
+
+            mBaseDataUpdater.init();
+
+            mCarouselTimer.init();
+            mBroadcastTimer.init();
+
+            ReturnOB returnOB = mPlayerDB.getKeyData();
+            if(returnOB == null) {
+                InitclientIB initclientIB = new InitclientIB(mDeviceID, Config.CLINE_TYPE);
+                returnOB = ServerConnection.getInstance().setClientInit(initclientIB);
+            }
+
             if(returnOB != null && returnOB.getResponse_code() == 1) {
-                SystemClock.setCurrentTimeMillis(returnOB.getTime());
-                ServerConnection.getInstance().setClientSecret(returnOB.getClient_secret());
+
+                ServerConnection.getInstance().setClientSecret("3affc105c803e49da18849b3ccb1c96a");//returnOB.getClient_secret()
                 mBaseDataUpdater.start();
                 mUploadLogUpdater.start();
+
+                mPlayerDB.writeKeyData(returnOB);
             }
         }
     });
@@ -94,6 +115,8 @@ public class MainService extends Service {
                 case BaseDataUpdater.UPDATE_RADIO_PACKET_LIST:
                     @SuppressWarnings("unchecked")
                     ArrayList<BaseDataDataIteamIB> packetList = (ArrayList<BaseDataDataIteamIB>)msg.obj;
+                    if(packetList == null)
+                        break;
 
                     RadioList list = mPlayer.getPlayerList();
                     if(list == null) {
@@ -274,10 +297,6 @@ public class MainService extends Service {
 
         mPlayerDB.init(this);
         mRadioManager.init(mHandler);
-
-        mBaseDataUpdater.init();
-        mCarouselTimer.init();
-        mBroadcastTimer.init();
 
         mClientThread.start();
     }

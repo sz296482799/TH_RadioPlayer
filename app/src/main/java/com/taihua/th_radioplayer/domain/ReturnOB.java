@@ -5,7 +5,6 @@ public class ReturnOB {
 	private int response_code;
 	private String client_secret;
 	private String msg;
-	private long time;
 	
 	public int getResponse_code() {
 		return response_code;
@@ -26,18 +25,10 @@ public class ReturnOB {
 		this.msg = msg;
 	}
 
-	public void setTime(long time) {
-		this.time = time;
-	}
-
-	public long getTime() {
-		return time;
-	}
-
 	@Override
 	public String toString() {
 		return "InitclientOutputBean [response_code=" + response_code
-				+ ", client_secret=" + client_secret + ", msg=" + msg + ", time=" + time + "]";
+				+ ", client_secret=" + client_secret + ", msg=" + msg + "]";
 	}
 	
 

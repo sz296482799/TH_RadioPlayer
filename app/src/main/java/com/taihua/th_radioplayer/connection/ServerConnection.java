@@ -35,10 +35,18 @@ public class ServerConnection {
 		}
 		return mInstance;
 	}
-	
-	public void setServerUrl(String serverUrl) {
-		mServerUrl = serverUrl;
-	}
+
+	private String getToKen(String option) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String api_token = null;
+
+        if(mClientSecret != null) {
+            String apiStr = option + format.format(new Date()) + mClientSecret;
+            LogUtil.d(TAG, "api str:" + apiStr);
+            return "api_token=" + MD5Util.MD5(apiStr);
+        }
+        return null;
+    }
 	
 	private String getBaseUrl() {
 		return URL_HTTP_HEAD + mServerUrl + "/taihua/index.php";
@@ -54,22 +62,13 @@ public class ServerConnection {
 				+ getParamString("op", option)
 				+ (id != null ? getParamString("id", id) : "");
 	}
-
-    private String getSecretOptionUrl(String option, String id) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        String api_token = null;
-        if(mClientSecret != null)
-            api_token = MD5Util.MD5(option + format.format(new Date()) + mClientSecret);
-        return getOptionUrl(option, id)
-                + (api_token != null ? getParamString("api_token", api_token) : "");
-    }
 	
 	private String getBaseDataUrl(String id) {
-		return getSecretOptionUrl(Config.Option.get_base_data.getName(), id);
+		return getOptionUrl(Config.Option.get_base_data.getName(), id);
 	}
 	
 	private String getMusicUrl(String id, int channel_id, int page, int pagesize) {
-		String url = getSecretOptionUrl(Config.Option.get_music_data.getName(), id);
+		String url = getOptionUrl(Config.Option.get_music_data.getName(), id);
 		return url
 				+ getParamString("ch_id", "" + channel_id)
 				+ getParamString("page", "" + page)
@@ -77,8 +76,12 @@ public class ServerConnection {
 	}
 	
 	private String getServerDataUrl(String id) {
-		return getSecretOptionUrl(Config.Option.get_set_data.getName(), id);
+		return getOptionUrl(Config.Option.get_set_data.getName(), id);
 	}
+
+    private String getServerTimeUrl() {
+        return getOptionUrl(Config.Option.get_time.getName(),null);
+    }
 	
 	private String setClientInitUrl() {
 		return getOptionUrl(Config.Option.set_client_init.getName(), null);
@@ -101,13 +104,15 @@ public class ServerConnection {
         LogUtil.d(TAG, "setClientInit url:" + setClientInitUrl());
 		LogUtil.d(TAG, "setClientInit sendStr:" + sendStr);
 		String jsonStr = ConnectUtil.jsonPost(setClientInitUrl(), sendStr);
-        LogUtil.d(TAG, "setClientInit jsonStr:" + jsonStr);
 		if(jsonStr == null)
 		    return null;
 
+        LogUtil.d(TAG, "setClientInit jsonStr:" + jsonStr);
         ReturnOB info = JasonUtils.Jason2Object(jsonStr, ReturnOB.class);
         if(info == null || info.getResponse_code() == 0)
             return null;
+
+        LogUtil.d(TAG, "setClientInit info:" + info);
 		return info;
 	}
 
@@ -132,11 +137,12 @@ public class ServerConnection {
 	
 	public synchronized BaseDataIB getBaseData(String id) {
 
-		String jsonStr = ConnectUtil.getContent(getBaseDataUrl(id));
+		LogUtil.d(TAG, "getBaseData Url:" + getBaseDataUrl(id));
+		String jsonStr = ConnectUtil.getContent(getBaseDataUrl(id), getToKen(Config.Option.get_base_data.getName()));
 		if(jsonStr == null)
 		    return null;
 
-        LogUtil.d(TAG, "getBaseData:" + jsonStr);
+        LogUtil.d(TAG, "getBaseData jsonStr:" + jsonStr);
 		BaseDataIB baseDataIB = JasonUtils.Jason2Object(jsonStr, BaseDataIB.class);
 		if(baseDataIB == null || baseDataIB.getResponse_code() == 0)
 			return null;
@@ -154,8 +160,8 @@ public class ServerConnection {
 		ReturnMusicOB returnTemp = null;
 		do {
             LogUtil.d(TAG, "getMusic URL:" + getMusicUrl(id, channel_id, page_index, page_size));
-			String strTemp = ConnectUtil.getContent(getMusicUrl(id, channel_id, page_index++, page_size));
-            LogUtil.d(TAG, "getChannelAllMusic:" + strTemp);
+			String strTemp = ConnectUtil.getContent(getMusicUrl(id, channel_id, page_index++, page_size), getToKen(Config.Option.get_music_data.getName()));
+            LogUtil.d(TAG, "getChannelAllMusic jsonStr:" + strTemp);
 			returnTemp = JasonUtils.Jason2Object(strTemp, ReturnMusicOB.class);
 			if(returnTemp == null || returnTemp.getResponse_code() == 0)
 				break;
@@ -182,14 +188,29 @@ public class ServerConnection {
 	
 	public synchronized ReturnSetOB getServerData(String id) {
 
-		String jsonStr = ConnectUtil.getContent(getServerDataUrl(id));
+        LogUtil.d(TAG, "getServerData URL:" + getServerDataUrl(id));
+		String jsonStr = ConnectUtil.getContent(getServerDataUrl(id), getToKen(Config.Option.get_set_data.getName()));
 		if(jsonStr == null)
 		    return null;
 
-        LogUtil.d(TAG, "getServerData:" + jsonStr);
+        LogUtil.d(TAG, "getServerData jsonStr:" + jsonStr);
         ReturnSetOB setObj = JasonUtils.Jason2Object(jsonStr, ReturnSetOB.class);
         if(setObj == null || setObj.getResponse_code() == 0)
             return null;
         return setObj;
 	}
+
+    public synchronized ReturnTimeOB getServerTime() {
+
+        LogUtil.d(TAG, "getServerTime URL:" + getServerTimeUrl());
+        String jsonStr = ConnectUtil.getContent(getServerTimeUrl(), null);
+        if(jsonStr == null)
+            return null;
+
+        LogUtil.d(TAG, "getServerTime jsonStr:" + jsonStr);
+        ReturnTimeOB returnTimeOB = JasonUtils.Jason2Object(jsonStr, ReturnTimeOB.class);
+        if(returnTimeOB == null || returnTimeOB.getResponse_code() == 0)
+            return null;
+        return returnTimeOB;
+    }
 }

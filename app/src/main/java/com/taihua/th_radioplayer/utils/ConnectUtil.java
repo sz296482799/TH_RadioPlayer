@@ -12,7 +12,7 @@ public class ConnectUtil {
 
 	public static final String TAG = ConnectUtil.class.getName();
 
-	public static String getContent(String strURL) {
+	public static String getContent(String strURL, String cookie) {
 
 		HttpURLConnection conn = null;
 		StringBuffer sb = null;
@@ -24,6 +24,8 @@ public class ConnectUtil {
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setConnectTimeout(5 * 1000);
 			conn.setReadTimeout(10 * 1000);
+			if(cookie != null)
+                conn.setRequestProperty("Cookie", cookie);
 			if (conn.getResponseCode() == 200) {
 				sb = new StringBuffer();
 				inputReader = new InputStreamReader(conn.getInputStream());

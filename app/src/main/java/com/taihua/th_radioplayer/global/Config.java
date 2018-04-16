@@ -17,7 +17,8 @@ public class Config {
 		get_cloud_data(4, "get_cloud_data", "get downd list"), //
 		get_play_action(5, "get_play_action", "get action list"), //
 		set_client_init(6, "set_client_init", "init client"), //
-		set_box_log(7, "set_box_log", "stb record");
+		set_box_log(7, "set_box_log", "stb record"),
+        get_time(8, "get_time", "get server time");
 		private int id;
 		private String name;
 		private String value;

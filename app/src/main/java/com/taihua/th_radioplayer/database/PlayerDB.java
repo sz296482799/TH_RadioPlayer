@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.alibaba.fastjson.TypeReference;
 import com.taihua.th_radioplayer.domain.BaseDataIB;
+import com.taihua.th_radioplayer.domain.ReturnOB;
 import com.taihua.th_radioplayer.domain.ReturnSetOB;
 import com.taihua.th_radioplayer.player.RadioChannel;
 import com.taihua.th_radioplayer.utils.JasonUtils;
@@ -20,9 +21,11 @@ public class PlayerDB {
 
 	public static final String TAG = "PLAYER_DB";
 	public static final int DB_VERSION = 1;
+    public static final int KEY_DB_VERSION = 1;
 	
 	private static PlayerDB mInstance;
 	private DBHelper mDBHelper = null;
+    private DBHelper mKeyDBHelper = null;
 	
 	private PlayerDB() {
 		// TODO Auto-generated constructor stub
@@ -39,10 +42,41 @@ public class PlayerDB {
 		}
 		return mInstance;
 	}
-	
+
 	public void init(Context context) {
-		mDBHelper = new DBHelper(context, "radio.db", null, DB_VERSION);
+
+	    mDBHelper = new DBHelper(context, "radio.db", null, DB_VERSION);
+        mKeyDBHelper = new DBHelper(context, "key.db", null, KEY_DB_VERSION);
 	}
+
+    public boolean writeKeyData(ReturnOB returnOB) {
+        if(mDBHelper != null) {
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(DBHelper.JASON_TYPE_KEY, DBHelper.JASON_TYPE_KEYDATA);
+            values.put(DBHelper.JASON_VALUE_KEY, JasonUtils.object2JsonString(returnOB));
+
+            db.delete(DBHelper.RADIO_TABLE, DBHelper.JASON_TYPE_KEY + "=?", new String[]{"" + DBHelper.JASON_TYPE_KEYDATA});
+            db.insert(DBHelper.RADIO_TABLE, null, values);
+            return true;
+        }
+        return false;
+    }
+
+    public ReturnOB getKeyData() {
+        if(mDBHelper != null) {
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+
+            Cursor cursor = db.query(DBHelper.RADIO_TABLE, new String[] { DBHelper.JASON_VALUE_KEY }, DBHelper.JASON_TYPE_KEY + "=?", new String[] { "" + DBHelper.JASON_TYPE_KEYDATA }, null, null, null);
+
+            while (cursor.moveToNext()) {
+                String jasonStr = cursor.getString(cursor.getColumnIndex(DBHelper.JASON_VALUE_KEY));
+                LogUtil.d(TAG, "getKeyData:" + jasonStr);
+                return JasonUtils.Jason2Object(jasonStr, ReturnOB.class);
+            }
+        }
+        return null;
+    }
 	
 	public boolean writeBaseData(BaseDataIB baseData) {
 		if(mDBHelper != null) {
@@ -139,6 +173,8 @@ public class PlayerDB {
 		public static final int JASON_TYPE_BASEDATA = 1;
 		public static final int JASON_TYPE_SERVERDATA = 2;
 		public static final int JASON_TYPE_CHANNELDATA = 3;
+
+        public static final int JASON_TYPE_KEYDATA = 0x1001;
 		
 		public static final String JASON_TYPE_KEY = "JASON_TYPE";
 		public static final String JASON_VALUE_KEY = "JASON_VALUE";
