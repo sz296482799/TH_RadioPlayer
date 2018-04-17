@@ -3,14 +3,12 @@ package com.taihua.th_radioplayer;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.SystemClock;
+import android.os.*;
 import com.taihua.th_radioplayer.connection.ServerConnection;
 import com.taihua.th_radioplayer.database.PlayerDB;
 import com.taihua.th_radioplayer.domain.*;
 import com.taihua.th_radioplayer.global.Config;
+import com.taihua.th_radioplayer.manager.BluetoothManager;
 import com.taihua.th_radioplayer.manager.RadioManager;
 import com.taihua.th_radioplayer.manager.RadioStorageManager;
 import com.taihua.th_radioplayer.player.RadioChannel;
@@ -47,6 +45,7 @@ public class MainService extends Service {
     private RadioStorageManager mStorageManager = null;
     private PlayerDB mPlayerDB = null;
     private AudioManager mAudioManager;
+    private BluetoothManager mBluetoothManager;
 
     public MainService() {
     }
@@ -65,7 +64,7 @@ public class MainService extends Service {
     private void setSystemTime() {
         ReturnTimeOB returnTimeOB = ServerConnection.getInstance().getServerTime();
         if(returnTimeOB != null && returnTimeOB.getResponse_code() == 1) {
-            //SystemClock.setCurrentTimeMillis(returnTimeOB.getTime());
+            SystemClock.setCurrentTimeMillis(returnTimeOB.getTime());
         }
     }
 
@@ -190,6 +189,23 @@ public class MainService extends Service {
                     vol_down();
                     break;
 
+                case BluetoothManager.MESSAGE_DISCONNECTED:
+                    System.out.println("disconnected");
+                    break;
+                case BluetoothManager.MESSAGE_READ:
+                    System.out.println("message_read");
+                    Bundle temp =  msg.getData();
+                    byte[] buffer = temp.getByteArray(BluetoothManager.READ_MSG);
+                    String str = new String(buffer);
+                    LogUtil.d(TAG, "BluetoothManager.MESSAGE_READ Str:" + str);
+                    break;
+                case BluetoothManager.MESSAGE_WRITE:
+                    System.out.println("message_write");
+                    break;
+                case BluetoothManager.MESSAGE_STATE_CHANGE:
+                    System.out.println("state_change state:" + msg.arg1);
+                    break;
+
                 default:
                     return false;
             }
@@ -292,6 +308,7 @@ public class MainService extends Service {
         mRadioManager = RadioManager.getInstance();
         mPlayerDB = PlayerDB.getInstance();
         mAudioManager = (AudioManager)getSystemService(Service.AUDIO_SERVICE);
+        mBluetoothManager = BluetoothManager.getInstance();
 
         mStorageManager.init(this);
 
@@ -299,6 +316,9 @@ public class MainService extends Service {
         mRadioManager.init(mHandler);
 
         mClientThread.start();
+
+        mBluetoothManager.registerHandler(mHandler);
+        mBluetoothManager.start();
     }
 
 

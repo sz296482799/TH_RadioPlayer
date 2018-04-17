@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        hi3798mv100 {
+            keyAlias 'zshang'
+            keyPassword 'qq6912752'
+            storeFile file('/Users/zshang/Documents/android/keystore/HISI/HI3798MV100_security/hi3798mv100.platform.keystore')
+            storePassword 'qq6912752'
+        }
+    }
     compileSdkVersion 26
     buildToolsVersion "27.0.3"
     defaultConfig {
@@ -20,7 +28,7 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:26.1.0'
