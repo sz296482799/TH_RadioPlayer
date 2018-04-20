@@ -64,13 +64,16 @@ public class MainService extends Service {
     private void setSystemTime() {
         ReturnTimeOB returnTimeOB = ServerConnection.getInstance().getServerTime();
         if(returnTimeOB != null && returnTimeOB.getResponse_code() == 1) {
-            SystemClock.setCurrentTimeMillis(returnTimeOB.getTime());
+            LogUtil.d(TAG, "setCurrentTimeMillis Time:" + returnTimeOB.getTime());
+            SystemClock.setCurrentTimeMillis(returnTimeOB.getTime() * 1000);
         }
     }
 
     private Thread mClientThread = new Thread(new Runnable() {
         @Override
         public void run() {
+
+            LogUtil.d(TAG, "ClientThread Start!");
 
             setSystemTime();
 

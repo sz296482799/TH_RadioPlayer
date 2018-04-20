@@ -3,6 +3,8 @@ package com.taihua.th_radioplayer.utils;
 import java.util.List;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 
 public class JasonUtils {
@@ -40,14 +42,14 @@ public class JasonUtils {
 	
 	/**
 	 * jason字符�? 转换 对象
-	 * @param jasonstr
+	 * @param jsonstr
 	 * @param object
 	 * @return
 	 */
-	public static <T> T Jason2Object(String jasonstr, TypeReference<T> type) {
+	public static <T> T Jason2Object(String jsonstr, TypeReference<T> type) {
 		T base = null;
 		try {
-			base = JSON.parseObject(jasonstr, type);
+			base = JSON.parseObject(jsonstr, type);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -68,5 +70,15 @@ public class JasonUtils {
 		}
 		return temp;
 	}
-	
+
+	public static <T> String List2JsonString(List<T> list, TurnJson<T> t) {
+        JSONArray array = new JSONArray();
+
+        if(list != null) {
+            for (T t1 : list) {
+                array.add(t.turn(t1));
+            }
+        }
+        return array.toJSONString();
+    }
 }

@@ -129,7 +129,6 @@ public class RadioManager {
             } catch (DbException e) {
                 e.printStackTrace();
             }
-
     	}
 	}
 	
