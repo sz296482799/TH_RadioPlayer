@@ -93,6 +93,6 @@ public class ConnectUtil {
             }
         } catch (IOException e) {
         }  
-        return "error"; // 自定义错误信�??  
+        return null;
     } 
 }

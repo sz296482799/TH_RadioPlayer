@@ -98,38 +98,52 @@ public class BroadcastTimer {
 		}
 		mTimer = new Timer();
 	}
+
+    private void updateTimer() {
+        if(mBroadcastList.size() > 0) {
+            Comparator<BroadcastItem> com = new Comparator<BroadcastItem>() {
+
+                @Override
+                public int compare(BroadcastItem lhs, BroadcastItem rhs) {
+
+                    if(lhs.mDate.after(rhs.mDate))
+                        return 1;
+                    return -1;
+                }
+
+            };
+            Collections.sort(mBroadcastList, com);
+            if(mIsRunning) {
+                mTimer.schedule(new BroadcastTask(mHandler, mTimer, mBroadcastList), mBroadcastList.get(0).mDate);
+            }
+        }
+    }
+
+    public void touchBroadcast(ReturnSetDataBroadcastOB b) {
+        touchBroadcast(new BroadcastItem(b));
+    }
+
+    public void touchBroadcast(BroadcastItem item) {
+        if(mHandler != null && item != null) {
+            Message msg = new Message();
+            msg.what = BROADCAST_TIMER_MSG;
+            msg.obj = item;
+            mHandler.sendMessage(msg);
+        }
+    }
 	
 	public void setBroadcastList(List<ReturnSetDataBroadcastOB> broadcastList) {
 		
 		mBroadcastList.clear();
-		resetTimer();
+        resetTimer();
 		for(ReturnSetDataBroadcastOB b : broadcastList) {
 			setBroadcast(b);
 		}
-		
-		if(mBroadcastList.size() > 0) {
-			Comparator<BroadcastItem> com = new Comparator<BroadcastItem>() {
-	
-				@Override
-				public int compare(BroadcastItem lhs, BroadcastItem rhs) {
-					// TODO Auto-generated method stub
-					
-					if(lhs.mDate.after(rhs.mDate))
-						return 1;
-					return -1;
-				}
-				
-			};
-			Collections.sort(mBroadcastList, com);
-			
-			if(mIsRunning) {
-				mTimer.schedule(new BroadcastTask(mHandler, mTimer, mBroadcastList), mBroadcastList.get(0).mDate);
-			}
-		}
+		updateTimer();
 	}
 	
 	public void checkItem() {
-		BroadcastItem item = null;
+		BroadcastItem item;
 		Date date = new Date();
 
 		if(mBroadcastList.size() == 0)
@@ -164,7 +178,7 @@ public class BroadcastTimer {
 	public boolean isStart() {
 		return mIsRunning;
 	}
-	
+
 	public static class BroadcastItem {
 		private Date mDate = null;
 		private int mBroadcastID = -1;
@@ -228,11 +242,8 @@ public class BroadcastTimer {
 			// TODO Auto-generated method stub
 			if(mItemList.size() > 0) {
 				BroadcastItem item = mItemList.get(0);
-				
-				Message msg = new Message();
-				msg.what = BROADCAST_TIMER_MSG;
-				msg.obj = item;
-				mHandler.sendMessage(msg);
+
+                touchBroadcast(item);
 				
 				mItemList.remove(0);
 				

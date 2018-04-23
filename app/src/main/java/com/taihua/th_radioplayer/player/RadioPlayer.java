@@ -54,7 +54,8 @@ public class RadioPlayer implements OnPreparedListener, OnCompletionListener, On
 	private void playCarousel(CarouselItem item) throws Exception {
 		mCarouselItem = null;
 		setPlayerMode(PLAYMODE_LIST_LOOP);
-		switchPacket(item.getPacketID(), item.getChannelID());
+		switchPacket(item.getPacketID());
+		switchChannel(item.getChannelID());
 		play();
 		mPlayType = PLAYTYPE_CAROUSEL;
 	}
@@ -109,7 +110,9 @@ public class RadioPlayer implements OnPreparedListener, OnCompletionListener, On
 	}
 	
 	public void playSystem(int packetID, int channelID, int radioID) throws Exception {
-		switchPacket(packetID, channelID);
+		switchPacket(packetID);
+        switchChannel(channelID);
+        switchRadio(radioID);
 		play();
 		mPlayType = PLAYTYPE_SYSTEM;
 	}
@@ -141,20 +144,25 @@ public class RadioPlayer implements OnPreparedListener, OnCompletionListener, On
 		play(mList.prev());
 	}
 	
-	public void switchPacket(int packetID, int channelID) throws Exception {
+	public boolean switchPacket(int packetID) throws Exception {
 		
 		if(mList == null)
 			throw new Exception("The play list is null!");
-		if(mList.switchPacket(packetID, channelID))
-			play();
+		return mList.switchPacket(packetID);
 	}
 	
-	public void switchChannel(int channelID) throws Exception {
+	public boolean switchChannel(int channelID) throws Exception {
 		
 		if(mList == null)
 			throw new Exception("The play list is null!");
-		if(mList.switchChannel(channelID))
-			play();
+        return mList.switchChannel(channelID);
+	}
+
+	public boolean switchRadio(int radioID) throws Exception {
+
+		if(mList == null)
+			throw new Exception("The play list is null!");
+        return mList.switchRadio(radioID);
 	}
 	
 	public boolean isPlaying() {

@@ -14,11 +14,12 @@ import com.taihua.th_radioplayer.utils.LogUtil;
 public class RadioChannel {
 	private int mChannelID = -1;
 	private int mChannelVer = -1;
+	private int mRadioNum = 0;
     private int downloadSuccNum = 0;
     private int downloadFailNum = 0;
 	private String mChannelName = null;
 	private String mChannelPic = null;
-	private int mIndex = -1;	
+	private int mIndex = -1;
 	private ArrayList<RadioItem> mRadioList = null;
 	private ArrayList<Integer> hasPacketList = null;
 	
@@ -116,8 +117,16 @@ public class RadioChannel {
 	public void setChannelVer(int channelVer) {
 		mChannelVer = channelVer;
 	}
-	
-	public int size() {
+
+    public int getRadioNum() {
+        return mRadioNum;
+    }
+
+    public void setRadioNum(int mRadioNum) {
+        this.mRadioNum = mRadioNum;
+    }
+
+    public int size() {
 		if(mRadioList != null)
 			return mRadioList.size();
 		return 0;
@@ -125,7 +134,7 @@ public class RadioChannel {
 	
 	public String current() {
 
-		if(mRadioList != null) {
+		if(mRadioList != null && mRadioList.size() > 0) {
 			if(mIndex >= 0 && mIndex < mRadioList.size())
 				return mRadioList.get(mIndex).getPlayPath();
 		}
@@ -134,7 +143,7 @@ public class RadioChannel {
 
     public RadioItem getRadio() {
 
-        if(mRadioList != null) {
+        if(mRadioList != null && mRadioList.size() > 0) {
             if(mIndex >= 0 && mIndex < mRadioList.size())
                 return mRadioList.get(mIndex);
         }
@@ -143,7 +152,7 @@ public class RadioChannel {
 
 	public String next() {
 
-		if(mRadioList != null) {
+		if(mRadioList != null && mRadioList.size() > 0) {
 			mIndex++;
 			if(mIndex >= mRadioList.size()) mIndex = 0;
 			if(mIndex >= 0 && mIndex < mRadioList.size())
@@ -154,7 +163,7 @@ public class RadioChannel {
 
 	public String prev() {
 		
-		if(mRadioList != null) {
+		if(mRadioList != null && mRadioList.size() > 0) {
 			mIndex--;
 			if(mIndex < 0) mIndex = mRadioList.size() - 1;
 			if(mIndex >= 0 && mIndex < mRadioList.size())
@@ -192,6 +201,15 @@ public class RadioChannel {
 		}
 		return false;
 	}
+
+	public boolean switchRadio(int radioID) {
+        int index = getRadioIndex(radioID);
+	    if(index > 0) {
+	        mIndex = index;
+	        return true;
+        }
+        return false;
+    }
 	
 	public ArrayList<Integer> getHasPacketList() {
 		return hasPacketList;
@@ -207,6 +225,7 @@ public class RadioChannel {
 		mRadioList.clear();
         downloadSuccNum = 0;
         downloadFailNum = 0;
+        mIndex = 0;
 
 		if(c.getMusics() == null) {
 			return;
@@ -225,6 +244,7 @@ public class RadioChannel {
 			
 			add(item);
 		}
+		setRadioNum(mRadioList.size());
 	}
 
     public void downloadOne(RadioItem item) {

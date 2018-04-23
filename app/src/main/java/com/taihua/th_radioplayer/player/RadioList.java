@@ -73,15 +73,22 @@ public class RadioList {
 		return packet;
 	}
 
-	public synchronized boolean switchPacket(int packetID, int channelID) {
+	public synchronized boolean switchPacket(int packetID) {
 		mCurPacket = getPacket(packetID);
-		return switchChannel(channelID);
+		return mCurPacket != null;
 	}
 	
 	public synchronized boolean switchChannel(int channelID) {
 		if(mCurPacket != null) {
 			return mCurPacket.switchChannel(channelID);
 		}
+		return false;
+	}
+
+	public synchronized boolean switchRadio(int radioID) {
+        if(mCurPacket != null) {
+            return mCurPacket.switchRadio(radioID);
+        }
 		return false;
 	}
 }

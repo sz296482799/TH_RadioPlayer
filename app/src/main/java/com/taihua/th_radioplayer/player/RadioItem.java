@@ -31,6 +31,10 @@ public class RadioItem {
 	public void setRadioID(int radioID) {
 		mRadioID = radioID;
 	}
+
+	public int getRadioID() {
+		return mRadioID;
+	}
 	
 	public int getChannelID() {
 		return mChannelID;
@@ -38,10 +42,6 @@ public class RadioItem {
 	
 	public void setChannelID(int channelID) {
 		mChannelID = channelID;
-	}
-	
-	public int getRadioID() {
-		return mRadioID;
 	}
 	
 	public void setRadioName(String radioName) {
@@ -69,7 +69,6 @@ public class RadioItem {
 	}
 	
 	public void setDowanloadUrl(String dowanloadUrl) {
-		
 		mDownloadUrl = dowanloadUrl;
 	}
 	

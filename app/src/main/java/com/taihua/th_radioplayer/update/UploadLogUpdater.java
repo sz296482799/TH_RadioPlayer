@@ -20,8 +20,8 @@ public class UploadLogUpdater {
     public static final int ACTION_TYPE_STARTPLAY = 1;
     public static final int ACTION_TYPE_STOPPLAY = 2;
     public static final int ACTION_TYPE_SWITCH = 3;
-    public static final int ACTION_TYPE_VOLUP = 4;
-    public static final int ACTION_TYPE_VOLDOWN= 5;
+    public static final int ACTION_TYPE_VOLDOWN= 4;
+    public static final int ACTION_TYPE_VOLUP = 5;
     public static final int ACTION_TYPE_BROADCAST = 6;
     public static final int ACTION_TYPE_CAROUSEL = 7;
 

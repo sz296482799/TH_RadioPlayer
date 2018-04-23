@@ -4,6 +4,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.os.*;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.taihua.th_radioplayer.connection.MQTTConnection;
 import com.taihua.th_radioplayer.connection.ServerConnection;
 import com.taihua.th_radioplayer.database.PlayerDB;
 import com.taihua.th_radioplayer.domain.*;
@@ -19,6 +22,7 @@ import com.taihua.th_radioplayer.timer.BroadcastTimer;
 import com.taihua.th_radioplayer.timer.CarouselTimer;
 import com.taihua.th_radioplayer.update.BaseDataUpdater;
 import com.taihua.th_radioplayer.update.UploadLogUpdater;
+import com.taihua.th_radioplayer.utils.JasonUtils;
 import com.taihua.th_radioplayer.utils.LogUtil;
 
 import java.util.ArrayList;
@@ -27,13 +31,6 @@ import java.util.List;
 public class MainService extends Service {
 
     public static final String TAG = "MAIN_SERVICE";
-
-    public static final int PLAYER_ACTION_START = 0x2001;
-    public static final int PLAYER_ACTION_STOP = 0x2002;
-    public static final int PLAYER_ACTION_SWITCH= 0x2003;
-    public static final int PLAYER_ACTION_VOLUP = 0x2004;
-    public static final int PLAYER_ACTION_VOLDOWN = 0x2005;
-    public static final int PLAYER_ACTION_VOLSET = 0x2006;
 
     private String mDeviceID = null;
     private RadioPlayer mPlayer = null;
@@ -46,6 +43,7 @@ public class MainService extends Service {
     private PlayerDB mPlayerDB = null;
     private AudioManager mAudioManager;
     private BluetoothManager mBluetoothManager;
+    private MQTTConnection mMqttConnection;
 
     public MainService() {
     }
@@ -82,6 +80,8 @@ public class MainService extends Service {
             mCarouselTimer.init();
             mBroadcastTimer.init();
 
+            mMqttConnection.init(mDeviceID, mCallback);
+
             ReturnOB returnOB = mPlayerDB.getKeyData();
             if(returnOB == null) {
                 InitclientIB initclientIB = new InitclientIB(mDeviceID, Config.CLINE_TYPE);
@@ -103,7 +103,7 @@ public class MainService extends Service {
 
         @Override
         public boolean handleMessage(Message msg) {
-            // TODO Auto-generated method stub
+
             LogUtil.d(TAG, "Handler:" + msg);
             switch (msg.what) {
 
@@ -176,22 +176,6 @@ public class MainService extends Service {
                                 channel.getDownloadFailNum() > 0 ? UploadLogUpdater.UPADTE_TYPE_FAIL : UploadLogUpdater.UPADTE_TYPE_SUCC);
                     break;
 
-                case PLAYER_ACTION_START:
-                    play();
-                    break;
-                case PLAYER_ACTION_STOP:
-                    stop();
-                    break;
-                case PLAYER_ACTION_SWITCH:
-                    switchChannel(msg.arg1, msg.arg2);
-                    break;
-                case PLAYER_ACTION_VOLUP:
-                    vol_up();
-                    break;
-                case PLAYER_ACTION_VOLDOWN:
-                    vol_down();
-                    break;
-
                 case BluetoothManager.MESSAGE_DISCONNECTED:
                     System.out.println("disconnected");
                     break;
@@ -216,6 +200,125 @@ public class MainService extends Service {
         }
     });
 
+    private MQTTConnection.ConnectionCallback mCallback = new MQTTConnection.ConnectionCallback() {
+        @Override
+        public String onAction(PublishItem item) {
+            if(Config.Option.get_base_data.getName().equals(item.getOption())) {
+                String data = item.getData();
+                if(data == null) {
+                    BaseDataIB baseDataIB = mPlayerDB.getBaseData();
+                    if(baseDataIB != null)
+                        return JasonUtils.object2JsonString(baseDataIB.getData().getBase());
+                }
+                else {
+                    BaseDataDataBaseIB baseDataIB = JasonUtils.Jason2Object(data, BaseDataDataBaseIB.class);
+                    if(baseDataIB != null) {
+                        if(setBaseData(baseDataIB))
+                            return reasonCodeString(200, "OK");
+                        else
+                            return reasonCodeString(201, "ERROR");
+                    }
+                }
+            }
+            else if (Config.Option.get_set_data.getName().equals(item.getOption())) {
+                String data = item.getData();
+                if(data == null) {
+                    ReturnSetOB returnSetOB = mPlayerDB.getServerData();
+                    if(returnSetOB != null)
+                        return JasonUtils.object2JsonString(returnSetOB);
+                }
+                else {
+                    ReturnSetOB returnSetOB = JasonUtils.Jason2Object(data, ReturnSetOB.class);
+                    if(returnSetOB != null) {
+                        List<ReturnSetDataBroadcastOB> broadcastList = returnSetOB.getData().getBroadcast();
+                        if(broadcastList != null)
+                            mBroadcastTimer.setBroadcastList(broadcastList);
+
+                        List<ReturnSetDataCarouselOB> carouselList = returnSetOB.getData().getCarousel();
+                        if(carouselList != null)
+                            mCarouselTimer.setCarouselList(carouselList);
+
+                        return reasonCodeString(200, "OK");
+                    }
+                }
+            }
+            else if (Config.Option.get_music_data.getName().equals(item.getOption())){
+                String data = item.getData();
+                if(data != null) {
+                    JSONObject jsonObject = JSON.parseObject(data);
+                    if(jsonObject != null) {
+                        Integer channel_id = jsonObject.getInteger("channel_id");
+                        if(channel_id == null) {
+                            List<RadioChannel> list = mRadioManager.getChannelList();
+                            return JasonUtils.object2JsonString(list);
+                        }
+                        else {
+                            RadioChannel channel = mRadioManager.getChannelByID(channel_id);
+                            if(channel != null) {
+                                List<RadioItem> list = channel.getRadios();
+                                return JasonUtils.object2JsonString(list);
+                            }
+                            else {
+                                return reasonCodeString(203, "No find channel!");
+                            }
+                        }
+                    }
+                }
+            }
+            else if (Config.Option.get_play_action.getName().equals(item.getOption())) {
+                String data = item.getData();
+                if(data != null) {
+                    JSONObject jsonObject = JSON.parseObject(data);
+                    if(jsonObject != null) {
+                        Integer action_id = jsonObject.getInteger("action_id");
+                        if(action_id != null) {
+                            int id = action_id;
+                            switch (id) {
+                                case UploadLogUpdater.ACTION_TYPE_STARTPLAY:
+                                    play();
+                                    break;
+                                case UploadLogUpdater.ACTION_TYPE_STOPPLAY:
+                                    stop();
+                                    break;
+                                case UploadLogUpdater.ACTION_TYPE_SWITCH:
+                                    Integer packet_id = jsonObject.getInteger("packet_id");
+                                    Integer channel_id = jsonObject.getInteger("channel_id");
+                                    Integer radio_id = jsonObject.getInteger("radio_id");
+
+                                    switchRadio(
+                                            packet_id == null ? -1 : packet_id,
+                                            channel_id == null ? -1 : channel_id,
+                                            radio_id == null ? -1 : radio_id
+                                            );
+                                    break;
+                                case UploadLogUpdater.ACTION_TYPE_VOLUP:
+                                    vol_up();
+                                    break;
+                                case UploadLogUpdater.ACTION_TYPE_VOLDOWN:
+                                    vol_down();
+                                    break;
+                                case UploadLogUpdater.ACTION_TYPE_BROADCAST:
+                                    ReturnSetDataBroadcastOB broadcast = jsonObject.getObject("broadcast", ReturnSetDataBroadcastOB.class);
+                                    if(broadcast != null) {
+                                        mBroadcastTimer.touchBroadcast(broadcast);
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            return reasonCodeString(202, "ERROR");
+        }
+    };
+
+    private String reasonCodeString(int code, String msg) {
+        Reason reason = new Reason();
+        reason.setReasonCode(code);
+        reason.setMsg(msg);
+        return JasonUtils.object2JsonString(reason);
+    }
+
     private void addAction(int actionID) {
         RadioItem radio = mPlayer.getPlayRadio();
         if(radio != null)
@@ -236,12 +339,21 @@ public class MainService extends Service {
         addAction(UploadLogUpdater.ACTION_TYPE_STOPPLAY);
     }
 
-    private void switchChannel(int packetID, int channelID) {
+    private void switchRadio(int packetID, int channelID, int radioID) {
+        boolean isSuccess = true;
+
         try {
-            mPlayer.switchPacket(packetID, channelID);
+            if (packetID != -1)
+                isSuccess |= mPlayer.switchPacket(packetID);
+            if (channelID != -1)
+                isSuccess |= mPlayer.switchChannel(channelID);
+            if (radioID != -1)
+                isSuccess |= mPlayer.switchRadio(radioID);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        if(isSuccess)
+            play();
         addAction(UploadLogUpdater.ACTION_TYPE_SWITCH);
     }
 
@@ -259,9 +371,9 @@ public class MainService extends Service {
         addAction(UploadLogUpdater.ACTION_TYPE_VOLDOWN);
     }
 
-    private void setBaseData(BaseDataDataBaseIB basedate) {
+    private boolean setBaseData(BaseDataDataBaseIB basedate) {
         if(mPlayer == null || basedate == null)
-            return;
+            return false;
 
         boolean isBroadcast = basedate.getIs_broadcast() == 1;
         boolean isCarousel = basedate.getIs_carousel() == 1;
@@ -285,6 +397,7 @@ public class MainService extends Service {
         mUploadLogUpdater.setCycle(basedate.getBox_log_cycle());
         mUploadLogUpdater.setIsUploadAction(basedate.getIs_action_log_upload() == 1);
         mUploadLogUpdater.setIsUploadUpdate(basedate.getIs_update_log_upload() == 1);
+        return true;
     }
 
     private void setMusic(ReturnMusicOB returnMusicOB) {
@@ -312,6 +425,7 @@ public class MainService extends Service {
         mPlayerDB = PlayerDB.getInstance();
         mAudioManager = (AudioManager)getSystemService(Service.AUDIO_SERVICE);
         mBluetoothManager = BluetoothManager.getInstance();
+        mMqttConnection = MQTTConnection.getInstance();
 
         mStorageManager.init(this);
 
@@ -323,8 +437,6 @@ public class MainService extends Service {
         mBluetoothManager.registerHandler(mHandler);
         mBluetoothManager.start();
     }
-
-
 
     public int onStartCommand(Intent intent, int flags, int startId)
     {

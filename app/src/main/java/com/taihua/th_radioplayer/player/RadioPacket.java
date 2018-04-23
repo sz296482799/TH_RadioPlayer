@@ -101,6 +101,14 @@ public class RadioPacket {
 		}
 		return false;
 	}
+
+    public boolean switchRadio(int radioID) {
+        RadioChannel channel = getCurChannel();
+        if(channel != null) {
+            return channel.switchRadio(radioID);
+        }
+        return false;
+    }
 	
 	public int getPacketID() {
 		return mPacketID;
@@ -126,6 +134,12 @@ public class RadioPacket {
 			for(BaseDataDataChannelIB c : p.getChannel()) {
 				hasChannelList.add(c.getChannel_id());
 			}
+			if(mCurChannelID == -1 && hasChannelList.size() > 0) {
+				mCurChannelID = hasChannelList.get(0);
+			}
 		}
+
+        if(hasChannelList.size() == 0)
+            mCurChannelID = -1;
 	}
 }

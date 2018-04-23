@@ -273,7 +273,11 @@ public class BaseDataUpdater {
         isRunning = false;
 	}
 
-	private class UpdateTask extends TimerTask {
+    public BaseDataIB getBaseData() {
+		return mBaseData;
+    }
+
+    private class UpdateTask extends TimerTask {
 
         @Override
         public void run() {

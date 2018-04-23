@@ -3,6 +3,7 @@ package com.taihua.th_radioplayer.manager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import android.annotation.SuppressLint;
@@ -206,6 +207,28 @@ public class RadioManager {
 	
 	public synchronized RadioChannel getChannelByID(int channelID) {
 		return mChannelMap.get(channelID);
+	}
+
+	public synchronized List<RadioChannel> getChannelList() {
+	    ArrayList<RadioChannel> list = new ArrayList<RadioChannel>();
+
+        Iterator<Entry<Integer, RadioChannel>> iter = mChannelMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<Integer, RadioChannel> entry = iter.next();
+            RadioChannel c = entry.getValue();
+            if(c != null) {
+                RadioChannel channel = new RadioChannel();
+
+                channel.setChannelID(c.getChannelID());
+                channel.setChannelPic(c.getChannelPic());
+                channel.setChannelName(c.getChannelName());
+                channel.setChannelVer(c.getChannelVer());
+                channel.setRadioNum(c.getRadioNum());
+
+                list.add(channel);
+            }
+        }
+		return list;
 	}
 	
 	public void clearPacket() {

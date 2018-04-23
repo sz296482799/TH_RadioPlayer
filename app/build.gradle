@@ -2,12 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     signingConfigs {
-        hi3798mv100 {
-            keyAlias 'zshang'
-            keyPassword 'qq6912752'
-            storeFile file('/Users/zshang/Documents/android/keystore/HISI/HI3798MV100_security/hi3798mv100.platform.keystore')
-            storePassword 'qq6912752'
-        }
     }
     compileSdkVersion 26
     buildToolsVersion "27.0.3"
@@ -37,4 +31,6 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile project(path: ':xutils')
+    compile files('libs/fastjson-1.1.68.android.jar')
+    compile files('libs/org.eclipse.paho.client.mqttv3-1.1.1.jar')
 }

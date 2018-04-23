@@ -8,8 +8,9 @@ public class Config {
     public static final String CLINE_TYPE = ClientType.STB.getName();
 
 	public static final boolean DEBUG = true;
+    //public static final String MQTT_SERVER_URL = "tcp://120.77.220.29:1883";
+    public static final String MQTT_SERVER_URL = "tcp://127.0.0.1:61613";
 
-	// �ӿ�����
 	public enum Option {
 		get_base_data(1, "get_base_data", "get base info"), //
 		get_music_data(2, "get_music_data", "get music list"), //
@@ -18,7 +19,12 @@ public class Config {
 		get_play_action(5, "get_play_action", "get action list"), //
 		set_client_init(6, "set_client_init", "init client"), //
 		set_box_log(7, "set_box_log", "stb record"),
-        get_time(8, "get_time", "get server time");
+        get_time(8, "get_time", "get server time"),
+
+        connected(9, "connected", "connect mqtt"),
+        disconnected(10, "disconnected", "disconnect mqtt");
+
+
 		private int id;
 		private String name;
 		private String value;
